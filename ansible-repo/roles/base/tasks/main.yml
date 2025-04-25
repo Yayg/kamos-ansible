@@ -1,0 +1,22 @@
+- name: Ensure unattended-upgrades is installed
+  apt:
+    name: unattended-upgrades
+    state: latest
+    update_cache: yes
+
+- name: Configure unattended-upgrades
+  copy:
+    src: files/unattended-upgrades.conf
+    dest: /etc/apt/apt.conf.d/50unattended-upgrades
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Enable unattended-upgrades
+  command: dpkg-reconfigure -f noninteractive unattended-upgrades
+
+- name: Ensure unattended-upgrades service is running
+  service:
+    name: unattended-upgrades
+    state: started
+    enabled: yes

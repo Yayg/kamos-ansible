@@ -1,0 +1,6 @@
+# This file contains default variables for the "base" role. 
+# It can define any default values that can be overridden in playbooks or inventory.
+
+unattended_upgrades_enabled: true
+unattended_upgrades_package: "unattended-upgrades"
+unattended_upgrades_config_file: "/etc/apt/apt.conf.d/50unattended-upgrades"
