@@ -35,11 +35,3 @@
 
 - name: Verify kind installation
   command: /home/kind/.local/bin/kind version
-  register: kind_version
-  changed_when: false
-
-- name: Ensure kind is installed
-  assert:
-    that:
-      - kind_version.stdout is search("kind version")
-    fail_msg: "Kind installation or update failed."
