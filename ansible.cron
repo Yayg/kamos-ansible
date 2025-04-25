@@ -1,4 +1,2 @@
-#!/bin/bash
-
-# Run ansible-pull with authentication for a private GitHub repository
-/usr/bin/ansible-pull -U https://<username>:<personal_access_token>@github.com/<username>/<repository>.git /workspaces/kamos-ansible/ansible-repo/pull.yml
+# Ansible pull cron job
+*/10 * * * * root /usr/sbin/kamos-ansible-pull
