@@ -18,6 +18,6 @@
     groups: docker
     append: yes
 
-- include_tasks: kind.yml
+- import_tasks: kind.yml
   become: yes
   become_user: kind
