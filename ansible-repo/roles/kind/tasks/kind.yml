@@ -22,14 +22,14 @@
 
 - name: Create if not exists local bin directory
   file:
-    path: "{{ ansible_env.HOME }}/.local/bin"
+    path: "/home/kind/.local/bin"
     state: directory
     mode: '0755'
 
 - name: Download and install the latest kind binary
   get_url:
     url: "{{ kind_download_url }}"
-    dest: "{{ ansible_env.HOME }}/.local/bin/kind"
+    dest: "/home/kind/.local/bin/kind"
     mode: '0755'
   when: kind_update_needed | bool
 
