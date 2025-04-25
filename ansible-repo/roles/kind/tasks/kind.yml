@@ -1,3 +1,5 @@
+
+
 - name: Get the latest kind version
   shell: |
     curl -s https://api.github.com/repos/kubernetes-sigs/kind/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/'
@@ -18,10 +20,16 @@
   set_fact:
     kind_update_needed: "{{ installed_kind_version.stdout is not search(latest_kind_version.stdout) }}"
 
+- name: Create if not exists local bin directory
+  file:
+    path: "{{ ansible_env.HOME }}/.local/bin"
+    state: directory
+    mode: '0755'
+
 - name: Download and install the latest kind binary
   get_url:
     url: "{{ kind_download_url }}"
-    dest: /usr/local/bin/kind
+    dest: {{ ansible_env.HOME }}/.local/bin/kind
     mode: '0755'
   when: kind_update_needed | bool
 
