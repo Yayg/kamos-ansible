@@ -10,19 +10,4 @@
 
 - include_tasks: docker.yml
 
-- name: Download kind binary
-  get_url:
-    url: https://kind.sigs.k8s.io/dl/v0.11.1/kind-linux-amd64
-    dest: /usr/local/bin/kind
-    mode: '0755'
-
-- name: Verify kind installation
-  command: kind version
-  register: kind_version
-  changed_when: false
-
-- name: Ensure kind is installed
-  assert:
-    that:
-      - kind_version.stdout is search("kind version")
-    fail_msg: "Kind installation failed."
+- include_tasks: kind.yml

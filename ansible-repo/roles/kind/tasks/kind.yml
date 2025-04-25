@@ -1,0 +1,37 @@
+- name: Get the latest kind version
+  shell: |
+    curl -s https://api.github.com/repos/kubernetes-sigs/kind/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/'
+  register: latest_kind_version
+  changed_when: false
+
+- name: Set kind download URL
+  set_fact:
+    kind_download_url: "https://kind.sigs.k8s.io/dl/{{ latest_kind_version.stdout }}/kind-linux-amd64"
+
+- name: Check if kind is already installed
+  command: kind version
+  register: installed_kind_version
+  failed_when: false
+  changed_when: false
+
+- name: Compare installed and latest kind versions
+  set_fact:
+    kind_update_needed: "{{ installed_kind_version.stdout is not search(latest_kind_version.stdout) }}"
+
+- name: Download and install the latest kind binary
+  get_url:
+    url: "{{ kind_download_url }}"
+    dest: /usr/local/bin/kind
+    mode: '0755'
+  when: kind_update_needed | bool
+
+- name: Verify kind installation
+  command: kind version
+  register: kind_version
+  changed_when: false
+
+- name: Ensure kind is installed
+  assert:
+    that:
+      - kind_version.stdout is search("kind version")
+    fail_msg: "Kind installation or update failed."

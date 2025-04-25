@@ -13,6 +13,7 @@ echo "localhost ansible_connection=local" > /etc/ansible/hosts
 
 1. Inventory
 ```sh
+mkdir -p /etc/ansible
 echo "localhost ansible_connection=local" > /etc/ansible/hosts
 ```
 
