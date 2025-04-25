@@ -34,7 +34,7 @@
   when: kind_update_needed | bool
 
 - name: Verify kind installation
-  command: kind version
+  command: /home/kind/.local/bin/kind version
   register: kind_version
   changed_when: false
 
