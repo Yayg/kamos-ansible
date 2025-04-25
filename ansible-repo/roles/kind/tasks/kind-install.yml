@@ -35,3 +35,22 @@
 
 - name: Verify kind installation
   command: /home/kind/.local/bin/kind version
+
+# Install kubectl
+- name: Download the latest kubectl binary
+  shell: |
+    curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+    chmod +x kubectl
+    mv kubectl /home/kind/.local/bin/kubectl
+  args:
+    creates: /home/kind/.local/bin/kubectl
+
+- name: Verify kubectl installation
+  command: /home/kind/.local/bin/kubectl version --client
+
+# Install Helm
+- name: Install Helm
+  shell: |
+    curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | HELM_INSTALL_DIR=/home/kind/.local/bin bash
+  args:
+    creates: /home/kind/.local/bin/helm

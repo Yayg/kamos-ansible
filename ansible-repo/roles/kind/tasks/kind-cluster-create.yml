@@ -1,0 +1,11 @@
+- name: Create a Kind cluster
+  shell: |
+    /home/kind/.local/bin/kind create cluster --name prod --config /home/kind/.kube/config
+  args:
+    creates: /home/kind/.kube/config
+
+- name: Set KUBECONFIG environment variable
+  shell: |
+    export KUBECONFIG=/home/kind/.kube/config
+  environment:
+    KUBECONFIG: /home/kind/.kube/config
