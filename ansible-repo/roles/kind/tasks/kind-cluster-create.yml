@@ -13,6 +13,14 @@
   changed_when: false
   when: kind_cluster_exists.rc == 0
 
+- name: Ensure /home/kind/.kind directory exists
+  file:
+    path: /home/kind/.kind
+    state: directory
+    mode: '0755'
+    owner: kind
+    group: kind
+
 - name: Generate Kind cluster configuration
   copy:
     dest: /home/kind/.kind/config
