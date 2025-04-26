@@ -1,6 +1,75 @@
-- name: Create a Kind cluster
+- name: Check if the Kind cluster already exists
   shell: |
-    /home/kind/.local/bin/kind create cluster --name prod --config /home/kind/.kube/config
+    /home/kind/.local/bin/kind get clusters | grep -w prod
+  register: kind_cluster_exists
+  failed_when: false
+  changed_when: false
+
+- name: Get the current Kubernetes version of the cluster
+  shell: |
+    kubectl version --short | grep "Server Version"
+  register: current_k8s_version
+  failed_when: false
+  changed_when: false
+  when: kind_cluster_exists.rc == 0
+
+- name: Generate Kind cluster configuration
+  copy:
+    dest: /home/kind/.kind/config
+    content: |
+      kind: Cluster
+      apiVersion: kind.x-k8s.io/v1alpha4
+      nodes:
+        - role: control-plane
+        - role: control-plane
+        - role: control-plane
+        - role: worker
+        - role: worker
+        - role: worker
+        - role: worker
+        - role: worker
+        - role: worker
+      networking:
+        disableDefaultCNI: true
+        podSubnet: "10.244.0.0/16"
+        serviceSubnet: "10.96.0.0/12"
+      kubeadmConfigPatches:
+        - |
+          kind: ClusterConfiguration
+          apiServer:
+            extraArgs:
+              "enable-admission-plugins": "NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,ResourceQuota"
+          scheduler:
+            extraArgs:
+              "leader-elect": "true"
+      featureGates:
+        IPv6DualStack: true
+  owner: kind
+  group: kind
+  mode: '0644'
+
+- name: Update control-plane nodes one by one
+  shell: |
+    /home/kind/.local/bin/kind delete node prod-control-plane-{{ item }} && \
+    /home/kind/.local/bin/kind create node --name prod-control-plane-{{ item }} --config /home/kind/.kind/config
+  loop: "{{ range(1, 4) | list }}"
+  when: kind_cluster_exists.rc == 0
+
+- name: Update worker nodes one by one
+  shell: |
+    /home/kind/.local/bin/kind delete node prod-worker-{{ item }} && \
+    /home/kind/.local/bin/kind create node --name prod-worker-{{ item }} --config /home/kind/.kind/config
+  loop: "{{ range(1, 7) | list }}"
+  when: kind_cluster_exists.rc == 0
+
+- name: Create Kind cluster if it does not exist
+  shell: |
+    /home/kind/.local/bin/kind create cluster --name prod --config /home/kind/.kind/config
+  when: kind_cluster_exists.rc != 0
+
+- name: Generate kubeconfig for the Kind cluster
+  shell: |
+    /home/kind/.local/bin/kind get kubeconfig --name prod > /home/kind/.kube/config
   args:
     creates: /home/kind/.kube/config
 
