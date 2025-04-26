@@ -51,25 +51,44 @@
             extraArgs:
               "leader-elect": "true"
 
+# Update the Kind cluster if it exists
+- name: Get the list of control-plane nodes
+  shell: |
+    /home/kind/.local/bin/kind get nodes --name prod | grep control-plane
+  register: control_plane_nodes
+  failed_when: false
+  changed_when: false
+  when: kind_cluster_exists.rc == 0
+
+- name: Get the list of worker nodes
+  shell: |
+    /home/kind/.local/bin/kind get nodes --name prod | grep worker
+  register: worker_nodes
+  failed_when: false
+  changed_when: false
+  when: kind_cluster_exists.rc == 0
+
 - name: Update control-plane nodes one by one
   shell: |
-    /home/kind/.local/bin/kind delete node prod-control-plane-{{ item }} && \
-    /home/kind/.local/bin/kind create node --name prod-control-plane-{{ item }} --config /home/kind/.kind/config
-  loop: "{{ range(1, 4) | list }}"
+    /home/kind/.local/bin/kind delete node {{ item }} --name prod && \
+    /home/kind/.local/bin/kind create node --name prod --config /home/kind/.kind/config
+  loop: "{{ control_plane_nodes.stdout_lines }}"
   when: kind_cluster_exists.rc == 0
 
 - name: Update worker nodes one by one
   shell: |
-    /home/kind/.local/bin/kind delete node prod-worker-{{ item }} && \
-    /home/kind/.local/bin/kind create node --name prod-worker-{{ item }} --config /home/kind/.kind/config
-  loop: "{{ range(1, 7) | list }}"
+    /home/kind/.local/bin/kind delete node {{ item }} --name prod && \
+    /home/kind/.local/bin/kind create node --name prod --config /home/kind/.kind/config
+  loop: "{{ worker_nodes.stdout_lines }}"
   when: kind_cluster_exists.rc == 0
 
+# Create the Kind cluster if it does not exist
 - name: Create Kind cluster if it does not exist
   shell: |
     /home/kind/.local/bin/kind create cluster --name prod --config /home/kind/.kind/config
   when: kind_cluster_exists.rc != 0
 
+# Generate kubeconfig for the Kind cluster
 - name: Generate kubeconfig for the Kind cluster
   shell: |
     /home/kind/.local/bin/kind get kubeconfig --name prod > /home/kind/.kube/config
