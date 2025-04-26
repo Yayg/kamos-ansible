@@ -51,6 +51,6 @@
 # Install Helm
 - name: Install Helm
   shell: |
-    curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | HELM_INSTALL_DIR=/home/kind/.local/bin bash -s --no-sudo
+    curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | HELM_INSTALL_DIR=/home/kind/.local/bin bash -s -- --no-sudo
   args:
     creates: /home/kind/.local/bin/helm
