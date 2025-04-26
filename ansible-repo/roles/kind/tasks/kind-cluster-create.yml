@@ -50,8 +50,6 @@
           scheduler:
             extraArgs:
               "leader-elect": "true"
-      featureGates:
-        IPv6DualStack: true
 
 - name: Update control-plane nodes one by one
   shell: |
