@@ -23,3 +23,9 @@
   become_user: kind
   become_method: sudo 
   become_flags: "-i"
+
+- import_tasks: kind-cluster-create.yml
+  become: yes
+  become_user: kind
+  become_method: sudo 
+  become_flags: "-i"
