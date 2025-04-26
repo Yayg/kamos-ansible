@@ -44,9 +44,6 @@
               "leader-elect": "true"
       featureGates:
         IPv6DualStack: true
-  owner: kind
-  group: kind
-  mode: '0644'
 
 - name: Update control-plane nodes one by one
   shell: |
