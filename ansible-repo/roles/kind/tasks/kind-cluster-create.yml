@@ -43,6 +43,16 @@
   failed_when: false
   changed_when: false
 
+- name: Get the latest Kind node image version
+  uri:
+    url: https://registry.hub.docker.com/v2/repositories/kindest/node/tags
+    return_content: yes
+  register: dockerhub_response
+
+- name: Parse the latest Kind node image version
+  set_fact:
+    kind_node_image: "kindest/node:{{ dockerhub_response.json.results | map(attribute='name') | list | first }}"
+
 - name: Get the list of control-plane nodes
   shell: |
     /home/kind/.local/bin/kind get nodes --name prod | grep control-plane
@@ -63,7 +73,7 @@
   block:
     - name: Drain control-plane node
       shell: |
-        kubectl drain {{ item }} --ignore-daemonsets --delete-emptydir-data --force
+        kubectl drain {{ control_plane_node }} --ignore-daemonsets --delete-emptydir-data --force
 
     - name: Stop and remove the Docker container for the control-plane node
       shell: |
@@ -76,11 +86,12 @@
           --network kind \
           -v kind-prod:/var/lib/kubelet \
           -v kind-prod:/var/lib/containerd \
-          kindest/node:latest
+          {{ kind_node_image }}
 
     - name: Wait for control-plane node to be Ready
       shell: |
         kubectl wait --for=condition=Ready node/{{ control_plane_node }} --timeout=300s
+      
   loop: "{{ control_plane_nodes.stdout_lines }}"
   loop_control:
     loop_var: control_plane_node
@@ -90,7 +101,7 @@
   block:
     - name: Drain worker node
       shell: |
-        kubectl drain {{ item }} --ignore-daemonsets --delete-emptydir-data --force
+        kubectl drain {{ worker_node }} --ignore-daemonsets --delete-emptydir-data --force
 
     - name: Stop and remove the Docker container for the worker node
       shell: |
@@ -101,12 +112,12 @@
         docker run -d --name {{ worker_node }} \
           --privileged \
           --network kind \
-          kindest/node:latest
+          {{ kind_node_image }}
 
     - name: Wait for worker node to be Ready
       shell: |
         kubectl wait --for=condition=Ready node/{{ worker_node }} --timeout=300s
-      
+
   loop: "{{ worker_nodes.stdout_lines }}"
   loop_control:
     loop_var: worker_node
