@@ -70,54 +70,14 @@
   when: kind_cluster_exists.rc == 0
 
 - name: Update control-plane nodes one by one
-  block:
-    - name: Drain control-plane node
-      shell: |
-        kubectl drain {{ control_plane_node }} --ignore-daemonsets --delete-emptydir-data --force
-
-    - name: Stop and remove the Docker container for the control-plane node
-      shell: |
-        docker stop {{ control_plane_node }} && docker rm {{ control_plane_node }}
-
-    - name: Recreate the control-plane node with the latest Kind image
-      shell: |
-        docker run -d --name {{ control_plane_node }} \
-          --privileged \
-          --network kind \
-          -v kind-prod:/var/lib/kubelet \
-          -v kind-prod:/var/lib/containerd \
-          {{ kind_node_image }}
-
-    - name: Wait for control-plane node to be Ready
-      shell: |
-        kubectl wait --for=condition=Ready node/{{ control_plane_node }} --timeout=300s
-      
+  include_tasks: kind-update-cp.yml
   loop: "{{ control_plane_nodes.stdout_lines }}"
   loop_control:
     loop_var: control_plane_node
   when: kind_cluster_exists.rc == 0
 
 - name: Update worker nodes one by one
-  block:
-    - name: Drain worker node
-      shell: |
-        kubectl drain {{ worker_node }} --ignore-daemonsets --delete-emptydir-data --force
-
-    - name: Stop and remove the Docker container for the worker node
-      shell: |
-        docker stop {{ worker_node }} && docker rm {{ worker_node }}
- 
-    - name: Recreate the worker node with the latest Kind image
-      shell: |
-        docker run -d --name {{ worker_node }} \
-          --privileged \
-          --network kind \
-          {{ kind_node_image }}
-
-    - name: Wait for worker node to be Ready
-      shell: |
-        kubectl wait --for=condition=Ready node/{{ worker_node }} --timeout=300s
-
+  include_tasks: kind-update-worker.yml
   loop: "{{ worker_nodes.stdout_lines }}"
   loop_control:
     loop_var: worker_node

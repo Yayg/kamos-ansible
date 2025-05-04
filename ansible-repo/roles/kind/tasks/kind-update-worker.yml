@@ -1,0 +1,16 @@
+- name: Drain worker node
+  shell: |
+    kubectl drain {{ worker_node }} --ignore-daemonsets --delete-emptydir-data --force
+- name: Stop and remove the Docker container for the worker node
+  shell: |
+    docker stop {{ worker_node }} && docker rm {{ worker_node }}
+
+- name: Recreate the worker node with the latest Kind image
+  shell: |
+    docker run -d --name {{ worker_node }} \
+      --privileged \
+      --network kind \
+      {{ kind_node_image }}
+- name: Wait for worker node to be Ready
+  shell: |
+    kubectl wait --for=condition=Ready node/{{ worker_node }} --timeout=300s
