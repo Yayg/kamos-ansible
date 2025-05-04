@@ -1,3 +1,29 @@
+- name: Get the latest Kind node image version
+  uri:
+    url: https://registry.hub.docker.com/v2/repositories/kindest/node/tags
+    return_content: yes
+  register: dockerhub_response
+
+- name: Parse the latest Kind node image version
+  set_fact:
+    kind_node_image: "kindest/node:{{ dockerhub_response.json.results | map(attribute='name') | list | first }}"
+
+- name: Check if the latest Kind node image is available locally
+  shell: |
+    docker images kindest/node --format "{{ '{{.Tag}}' }}" | grep -w "{{ kind_node_image.split(':')[1] }}"
+  register: local_image_check
+  failed_when: false
+  changed_when: false
+
+- name: Set update_needed fact
+  set_fact:
+    update_needed: "{{ local_image_check.rc != 0 }}"
+
+- name: Pull the latest Kind node image if not available locally
+  shell: |
+    docker pull {{ kind_node_image }}
+  when: update_needed | bool
+
 - name: Get the list of control-plane nodes
   shell: |
     /home/kind/.local/bin/kind get nodes --name prod | grep control-plane
@@ -19,11 +45,11 @@
   loop: "{{ control_plane_nodes.stdout_lines }}"
   loop_control:
     loop_var: control_plane_node
-  when: kind_cluster_exists.rc == 0
+  when: kind_cluster_exists.rc == 0 and update_needed | bool
 
 - name: Update worker nodes one by one
   include_tasks: kind-update-worker.yml
   loop: "{{ worker_nodes.stdout_lines }}"
   loop_control:
     loop_var: worker_node
-  when: kind_cluster_exists.rc == 0
+  when: kind_cluster_exists.rc == 0 and update_needed | bool

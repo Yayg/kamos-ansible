@@ -43,16 +43,6 @@
   failed_when: false
   changed_when: false
 
-- name: Get the latest Kind node image version
-  uri:
-    url: https://registry.hub.docker.com/v2/repositories/kindest/node/tags
-    return_content: yes
-  register: dockerhub_response
-
-- name: Parse the latest Kind node image version
-  set_fact:
-    kind_node_image: "kindest/node:{{ dockerhub_response.json.results | map(attribute='name') | list | first }}"
-
 # Create the Kind cluster if it does not exist
 - name: Create Kind cluster if it does not exist
   shell: |
