@@ -53,36 +53,6 @@
   set_fact:
     kind_node_image: "kindest/node:{{ dockerhub_response.json.results | map(attribute='name') | list | first }}"
 
-- name: Get the list of control-plane nodes
-  shell: |
-    /home/kind/.local/bin/kind get nodes --name prod | grep control-plane
-  register: control_plane_nodes
-  failed_when: false
-  changed_when: false
-  when: kind_cluster_exists.rc == 0
-
-- name: Get the list of worker nodes
-  shell: |
-    /home/kind/.local/bin/kind get nodes --name prod | grep worker
-  register: worker_nodes
-  failed_when: false
-  changed_when: false
-  when: kind_cluster_exists.rc == 0
-
-- name: Update control-plane nodes one by one
-  include_tasks: kind-update-cp.yml
-  loop: "{{ control_plane_nodes.stdout_lines }}"
-  loop_control:
-    loop_var: control_plane_node
-  when: kind_cluster_exists.rc == 0
-
-- name: Update worker nodes one by one
-  include_tasks: kind-update-worker.yml
-  loop: "{{ worker_nodes.stdout_lines }}"
-  loop_control:
-    loop_var: worker_node
-  when: kind_cluster_exists.rc == 0
-
 # Create the Kind cluster if it does not exist
 - name: Create Kind cluster if it does not exist
   shell: |
