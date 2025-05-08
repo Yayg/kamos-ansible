@@ -40,7 +40,7 @@
   snap:
     name: microk8s
     classic: yes
-    state: latest
+    state: enabled
 
 - name: Add user to microk8s group
   user:
