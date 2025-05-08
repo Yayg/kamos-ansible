@@ -1,0 +1,40 @@
+# Install ArgoCD
+- name: Install ArgoCD
+  shell: |
+    kubectl create namespace argocd || true
+    kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+  environment:
+    KUBECONFIG: /home/kind/.kube/config
+
+- name: Wait for ArgoCD server to be ready
+  shell: |
+    kubectl wait --namespace argocd \
+      --for=condition=available deployment \
+      --timeout=600s argocd-server
+  environment:
+    KUBECONFIG: /home/kind/.kube/config
+
+- name: Configure ArgoCD to point to a Git repository
+  shell: |
+    kubectl apply -f - <<EOF
+    apiVersion: argoproj.io/v1alpha1
+    kind: Application
+    metadata:
+      name: cluster-deployment
+      namespace: argocd
+    spec:
+      project: default
+      source:
+        repoURL: 'https://github.com/Yayg/kamos-argocd.git'
+        targetRevision: HEAD
+        path: cluster-config
+      destination:
+        server: 'https://kubernetes.default.svc'
+        namespace: default
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+    EOF
+  environment:
+    KUBECONFIG: /home/kind/.kube/config

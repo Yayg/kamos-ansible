@@ -1,0 +1,17 @@
+- name: Enable MicroK8s addons
+  shell: |
+    microk8s enable {{ item }}
+  loop: "{{ microk8s_addons }}"
+  args:
+    executable: /bin/bash
+  become: yes
+
+- name: Export MicroK8s kubeconfig to k8s user home
+  shell: |
+    mkdir -p ~/.kube
+    microk8s config > ~/.kube/config
+    chmod 600 ~/.kube/config
+  environment:
+    PATH: "/snap/bin:{{ ansible_env.PATH }}"
+  args:
+    executable: /bin/bash

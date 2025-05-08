@@ -20,3 +20,19 @@
     name: unattended-upgrades
     state: started
     enabled: yes
+
+# Install snapd 
+- name: Update apt cache
+  apt:
+    update_cache: yes
+
+- name: Install snapd
+  apt:
+    name: snapd
+    state: present
+
+- name: Ensure snapd is running
+  service:
+    name: snapd
+    state: started
+    enabled: yes
