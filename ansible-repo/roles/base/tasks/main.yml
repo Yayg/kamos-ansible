@@ -49,6 +49,11 @@
     path: /etc/fail2ban/jail.local
   register: jail_local_stat
 
+- name: Check if /etc/fail2ban/jail.local.orig exists
+  stat:
+    path: /etc/fail2ban/jail.local.orig
+  register: jail_local_orig_stat
+
 - name: Backup original jail.local if it exists and no backup yet
   copy:
     src: /etc/fail2ban/jail.local
@@ -60,7 +65,7 @@
   when:
     - jail_local_stat.stat.exists
     - not jail_local_stat.stat.islnk
-    - not (jail_local_stat.stat.path + ".orig") | path_exists
+    - not jail_local_orig_stat.stat.exists
 
 ## Start and enable fail2ban service
 - name: Ensure fail2ban service is running
