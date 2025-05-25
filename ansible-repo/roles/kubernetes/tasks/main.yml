@@ -34,7 +34,6 @@
     name: "k8s"
     state: present
     shell: /bin/bash
-    append: yes
 
 - name: Install MicroK8s
   snap:
