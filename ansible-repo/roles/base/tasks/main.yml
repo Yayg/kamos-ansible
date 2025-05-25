@@ -36,3 +36,44 @@
     name: snapd
     state: started
     enabled: yes
+
+# Install fail2ban
+- name: Install fail2ban
+  apt:
+    name: fail2ban
+    state: present
+
+## Backup original configuration files
+- name: Check if /etc/fail2ban/jail.local exists
+  stat:
+    path: /etc/fail2ban/jail.local
+  register: jail_local_stat
+
+- name: Backup original jail.local if it exists and no backup yet
+  copy:
+    src: /etc/fail2ban/jail.local
+    dest: /etc/fail2ban/jail.local.orig
+    remote_src: yes
+    owner: root
+    group: root
+    mode: '0644'
+  when:
+    - jail_local_stat.stat.exists
+    - not jail_local_stat.stat.islnk
+    - not (jail_local_stat.stat.path + ".orig") | path_exists
+
+## Start and enable fail2ban service
+- name: Ensure fail2ban service is running
+  service:
+    name: fail2ban
+    state: started
+    enabled: yes
+
+- name: Deploy fail2ban jail.local configuration
+  copy:
+    src: jail.local
+    dest: /etc/fail2ban/jail.local
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart fail2ban
