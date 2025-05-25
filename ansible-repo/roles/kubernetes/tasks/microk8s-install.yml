@@ -4,7 +4,6 @@
   loop: "{{ microk8s_addons }}"
   args:
     executable: /bin/bash
-  become: yes
 
 - name: Export MicroK8s kubeconfig to k8s user home
   shell: |
