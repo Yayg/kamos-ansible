@@ -61,8 +61,8 @@
   become_flags: "-i"
 
 # Post-installation tasks
-#- import_tasks: cni.yml
-#  become: yes
-#  become_user: k8s
-#  become_method: sudo 
-#  become_flags: "-i"
+- import_tasks: cni.yml
+  become: yes
+  become_user: k8s
+  become_method: sudo 
+  become_flags: "-i"
