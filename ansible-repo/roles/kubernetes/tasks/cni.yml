@@ -5,6 +5,7 @@
     sha256sum --check cilium-linux-amd64.tar.gz.sha256sum
     tar xzvf cilium-linux-amd64.tar.gz
     chmod +x cilium
+    mkdir -p /home/k8s/.local/bin
     mv cilium /home/k8s/.local/bin/
   args:
     creates: /home/k8s/.local/bin/cilium

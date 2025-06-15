@@ -54,6 +54,7 @@
   args:
     executable: /bin/bash
 
+# Export MicroK8s kubeconfig to k8s user home
 - import_tasks: microk8s-install.yml
   become: yes
   become_user: k8s
