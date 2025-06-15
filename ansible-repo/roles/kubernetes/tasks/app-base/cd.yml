@@ -4,7 +4,7 @@
     kubectl create namespace argocd || true
     kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
   environment:
-    KUBECONFIG: /home/kind/.kube/config
+    KUBECONFIG: /home/k8s/.kube/config
 
 - name: Wait for ArgoCD server to be ready
   shell: |
@@ -12,7 +12,7 @@
       --for=condition=available deployment \
       --timeout=600s argocd-server
   environment:
-    KUBECONFIG: /home/kind/.kube/config
+    KUBECONFIG: /home/k8s/.kube/config
 
 - name: Configure ArgoCD to point to a Git repository
   shell: |
@@ -37,4 +37,4 @@
           selfHeal: true
     EOF
   environment:
-    KUBECONFIG: /home/kind/.kube/config
+    KUBECONFIG: /home/k8s/.kube/config
