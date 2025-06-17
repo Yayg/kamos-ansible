@@ -1,9 +1,4 @@
 ---
-- name: Ensure python requests is installed for DDNS update
-  ansible.builtin.pip:
-    name: requests
-    state: present
-
 - name: Update Dynu DDNS with current public IP
   vars:
     dynu_api_key: "{{ lookup('env', 'DYNU_API_KEY') }}"
