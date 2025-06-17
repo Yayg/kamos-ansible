@@ -56,6 +56,7 @@
           Content-Type: "application/json"
         body_format: json
         body:
+          name: "{{ dynu_hostname }}"
           ipv4Address: "{{ public_ip.content }}"
       register: dynu_update_result
       
