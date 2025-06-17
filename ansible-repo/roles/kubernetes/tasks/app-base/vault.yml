@@ -32,6 +32,7 @@
     name: vault
     chart_ref: hashicorp/vault
     namespace: vault
+    create_namespace: yes
     state: present
   register: vault_helm_deploy
   when: vault_helm_info.status is not defined or
