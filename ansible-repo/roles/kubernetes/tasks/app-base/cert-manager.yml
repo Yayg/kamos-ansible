@@ -40,7 +40,7 @@
     # Debug
     - name: Find A record ID for hostname
       set_fact:
-        dynu_list: "{{ dynu_dns_list.json | default([]) }}"
+        dynu_list: "{{ (dynu_dns_records.json | default([])).dnsRecords | default([]) }}"
     
     - name: Debug Dynu DNS records
       debug:
