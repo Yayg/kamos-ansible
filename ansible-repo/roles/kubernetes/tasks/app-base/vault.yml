@@ -186,7 +186,7 @@
     kind: CronJob
     metadata:
       name: refresh-vault-token
-      namespace default
+      namespace: default
     spec:
       schedule: "*/30 * * * *"
       jobTemplate:
