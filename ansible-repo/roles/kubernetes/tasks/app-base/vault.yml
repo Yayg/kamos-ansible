@@ -41,9 +41,10 @@
 
 - name: Wait for Vault to be ready
   shell: |
-    kubectl wait --namespace vault \
-      --for=condition=available deployment \
-      --timeout=600s vault
+    sleep 15
+#    kubectl wait --namespace vault \ 15
+#      --for=condition=available sts \ 15
+#      --timeout=600s vault
   environment:
     KUBECONFIG: /home/k8s/.kube/config
 
