@@ -50,6 +50,13 @@
   args:
     executable: /bin/bash
 
+- name: Upgrade MicroK8s addons
+  shell: |
+    microk8s enable {{ item }}:upgrade
+  loop: "{{ microk8s_addons }}"
+  args:
+    executable: /bin/bash
+
 # Export MicroK8s kubeconfig to k8s user home
 - import_tasks: microk8s-install.yml
   become: yes

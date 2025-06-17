@@ -5,3 +5,4 @@ microk8s_addons:
   - storage
   - cilium
   - ingress
+  - cert-manager

@@ -1,0 +1,73 @@
+---
+- name: Ensure python requests is installed for DDNS update
+  ansible.builtin.pip:
+    name: requests
+    state: present
+
+- name: Update Dynu DDNS with current public IP
+  vars:
+    dynu_api_key: "{{ lookup('env', 'DYNU_API_KEY') }}"
+    dynu_hostname: "kamos.freeddns.org"
+  block:
+    - name: Get current public IP
+      uri:
+        url: https://api.ipify.org
+        return_content: yes
+      register: public_ip
+
+    - name: Update Dynu DDNS record
+      uri:
+        url: "https://api.dynu.com/nic/update"
+        method: GET
+        return_content: yes
+        headers:
+          accept: "application/json"
+        user: "{{ dynu_hostname }}"
+        password: "{{ dynu_api_key }}"
+        body_format: form-urlencoded
+        params:
+          hostname: "{{ dynu_hostname }}"
+          myip: "{{ public_ip.content }}"
+      register: dynu_update_result
+
+    - name: Show Dynu DDNS update result
+      debug:
+        var: dynu_update_result.content
+
+- name: Create ClusterIssuer for Let's Encrypt (Staging)
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: cert-manager.io/v1
+      kind: ClusterIssuer
+      metadata:
+        name: letsencrypt-staging
+      spec:
+        acme:
+          server: https://acme-staging-v02.api.letsencrypt.org/directory
+          email: me@raf.sh
+          privateKeySecretRef:
+            name: letsencrypt-staging
+          solvers:
+            - http01:
+                ingress:
+                  class: nginx
+
+- name: Create ClusterIssuer for Let's Encrypt (Production)
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: cert-manager.io/v1
+      kind: ClusterIssuer
+      metadata:
+        name: letsencrypt-prod
+      spec:
+        acme:
+          server: https://acme-v02.api.letsencrypt.org/directory
+          email: me@raf.sh
+          privateKeySecretRef:
+            name: letsencrypt-prod
+          solvers:
+            - http01:
+                ingress:
+                  class: nginx

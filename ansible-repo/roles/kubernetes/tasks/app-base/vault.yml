@@ -123,9 +123,20 @@
     KUBECONFIG: /home/k8s/.kube/config
 
 # Install External Secrets Operator
-- name: Install External Secrets Operator
+- name: Add External Secrets Helm repository
   shell: |
-    kubectl apply -f https://github.com/external-secrets/external-secrets/releases/latest/download/install-bundle.yaml
+    helm repo add external-secrets https://charts.external-secrets.io
+    helm repo update
+  environment:
+    KUBECONFIG: /home/k8s/.kube/config
+
+- name: Install External Secrets Operator with Helm
+  community.kubernetes.helm:
+    name: external-secrets
+    chart_ref: external-secrets/external-secrets
+    namespace: external-secrets
+    create_namespace: yes
+    state: present
   environment:
     KUBECONFIG: /home/k8s/.kube/config
 
