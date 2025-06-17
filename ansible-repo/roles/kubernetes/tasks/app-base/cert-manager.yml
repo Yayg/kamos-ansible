@@ -63,7 +63,7 @@
       
     - name: Show Dynu DDNS update result
       debug:
-      var: dynu_update_result.stdout
+        var: dynu_update_result.stdout
 
 - name: Create ClusterIssuer for Let's Encrypt (Staging)
   kubernetes.core.k8s:
