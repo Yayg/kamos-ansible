@@ -5,7 +5,7 @@ Ansible repo for Kamos configuration
 
 ```sh
 sudo apt install ansible 
-
+ansible-galaxy collection install community.kubernetes
 echo "localhost ansible_connection=local" > /etc/ansible/hosts
 ```
 
