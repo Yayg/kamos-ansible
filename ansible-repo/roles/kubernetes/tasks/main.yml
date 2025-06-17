@@ -61,8 +61,16 @@
   become_method: sudo 
   become_flags: "-i"
 
-# Post-installation tasks
+# Install Cilium CNI
 - import_tasks: cni.yml
+  become: yes
+  become_user: k8s
+  become_method: sudo 
+  become_flags: "-i"
+
+
+## Install Vault
+- import_tasks: app-base/vault.yml
   become: yes
   become_user: k8s
   become_method: sudo 
