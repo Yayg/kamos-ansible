@@ -37,6 +37,16 @@
         return_content: yes
       register: dynu_dns_records
 
+    # Debug
+    - name: Find A record ID for hostname
+      set_fact:
+        dynu_a_record_id: "{{ item.id }}"
+        dynu_list: "{{ dynu_dns_list.json | default([]) }}"
+    
+    - name: Debug Dynu DNS records
+      debug:
+        var: dynu_list
+
     - name: Find A record ID for hostname
       set_fact:
         dynu_a_record_id: "{{ item.id }}"
