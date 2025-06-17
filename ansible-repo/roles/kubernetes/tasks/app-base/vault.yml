@@ -76,7 +76,6 @@
   shell: |
     VAULT_UNSEAL_KEY=$(jq -r ".unseal_keys_b64[0]" /tmp/vault-init.json)
     kubectl exec -n vault vault-0 -- vault operator unseal $VAULT_UNSEAL_KEY
-  when: vault_helm_deploy.changed
   environment:
     KUBECONFIG: /home/k8s/.kube/config
 
