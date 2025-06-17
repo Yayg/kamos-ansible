@@ -20,9 +20,11 @@
     vault_chart_version: "{{ vault_chart_version_result.stdout }}"
 
 - name: Check if Vault Helm release exists
-  community.kubernetes.helm_info:
-    name: vault
+  community.general.helm_info:
+    release_name: vault
+    kube_context: ""
     namespace: vault
+    kubeconfig: /home/kind/.kube/config
   register: vault_helm_info
   ignore_errors: yes
 
