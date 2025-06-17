@@ -8,6 +8,7 @@
       - software-properties-common
       - python3-pip
       - python3-requests
+      - python3-kubernetes
     state: latest
     update_cache: yes
 
