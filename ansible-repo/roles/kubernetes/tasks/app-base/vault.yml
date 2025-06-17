@@ -1,20 +1,42 @@
+---
 # Install HashiCorp Vault in Kubernetes
 - name: Add the HashiCorp Helm repository
   shell: |
     helm repo add hashicorp https://helm.releases.hashicorp.com
     helm repo update
   environment:
-    KUBECONFIG: /home/kind/.kube/config
+    KUBECONFIG: /home/k8s/.kube/config
 
-- name: Install or Upgrade Vault using Helm
+- name: Get latest Vault chart version
   shell: |
-    helm upgrade --install vault hashicorp/vault \
-      --namespace vault \
-      --create-namespace \
-      --set "server.dev.enabled=true" \
-      --set "injector.enabled=false"
+    helm search repo hashicorp/vault --devel -o json | jq -r '.[0].version'
+  register: vault_chart_version_result
+  changed_when: false
   environment:
-    KUBECONFIG: /home/kind/.kube/config
+    KUBECONFIG: /home/k8s/.kube/config
+
+- name: Set latest Vault chart version fact
+  set_fact:
+    vault_chart_version: "{{ vault_chart_version_result.stdout }}"
+
+- name: Check if Vault Helm release exists
+  community.kubernetes.helm_info:
+    name: vault
+    namespace: vault
+  register: vault_helm_info
+  ignore_errors: yes
+
+- name: Deploy or upgrade Vault with Helm
+  community.kubernetes.helm:
+    name: vault
+    chart_ref: hashicorp/vault
+    chart_version: "{{ vault_chart_version }}"
+    namespace: vault
+    state: present
+  register: vault_helm_deploy
+  when: vault_helm_info.failed or
+        vault_helm_info.release is not defined or
+        vault_helm_info.release.chart.version != vault_chart_version
 
 - name: Wait for Vault to be ready
   shell: |
@@ -22,9 +44,19 @@
       --for=condition=available deployment \
       --timeout=600s vault
   environment:
-    KUBECONFIG: /home/kind/.kube/config
+    KUBECONFIG: /home/k8s/.kube/config
 
-- name: Initialize Vault
+# Only initialize Vault if it hasn't been initialized before
+- name: Check if Vault is initialized
+  shell: |
+    kubectl exec -n vault vault-0 -- vault status -format=json | jq -r .initialized
+  register: vault_initialized
+  failed_when: false
+  changed_when: false
+  environment:
+    KUBECONFIG: /home/k8s/.kube/config
+
+- name: Initialize Vault (only if not initialized)
   shell: |
     kubectl exec -n vault vault-0 -- vault operator init -key-shares=1 -key-threshold=1 -format=json > /tmp/vault-init.json
     VAULT_ROOT_TOKEN=$(jq -r ".root_token" /tmp/vault-init.json)
@@ -33,15 +65,18 @@
       --namespace vault --dry-run=client -o yaml | kubectl apply -f -
   args:
     creates: /tmp/vault-init.json
+  when: vault_initialized.stdout is defined and vault_initialized.stdout == "false"
   environment:
-    KUBECONFIG: /home/kind/.kube/config
+    KUBECONFIG: /home/k8s/.kube/config
 
-- name: Unseal Vault
+# Unseal Vault if a new version was deployed or upgraded
+- name: Unseal Vault (if upgraded or newly deployed)
   shell: |
     VAULT_UNSEAL_KEY=$(jq -r ".unseal_keys_b64[0]" /tmp/vault-init.json)
     kubectl exec -n vault vault-0 -- vault operator unseal $VAULT_UNSEAL_KEY
+  when: vault_helm_deploy.changed
   environment:
-    KUBECONFIG: /home/kind/.kube/config
+    KUBECONFIG: /home/k8s/.kube/config
 
 - name: Enable Kubernetes Auth in Vault
   shell: |
@@ -52,7 +87,7 @@
       kubernetes_host="https://$KUBERNETES_SERVICE_HOST:$KUBERNETES_SERVICE_PORT" \
       kubernetes_ca_cert=@/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
   environment:
-    KUBECONFIG: /home/kind/.kube/config
+    KUBECONFIG: /home/k8s/.kube/config
 
 - name: Create Vault Policy for External Secrets
   shell: |
@@ -62,7 +97,7 @@
     }
     EOF
   environment:
-    KUBECONFIG: /home/kind/.kube/config
+    KUBECONFIG: /home/k8s/.kube/config
 
 - name: Create Vault Role for Kubernetes Auth
   shell: |
@@ -72,7 +107,22 @@
       policies=external-secrets \
       ttl=24h
   environment:
-    KUBECONFIG: /home/kind/.kube/config
+    KUBECONFIG: /home/k8s/.kube/config
+
+# Install External Secrets Operator
+- name: Install External Secrets Operator
+  shell: |
+    kubectl apply -f https://github.com/external-secrets/external-secrets/releases/latest/download/install-bundle.yaml
+  environment:
+    KUBECONFIG: /home/k8s/.kube/config
+
+- name: Wait for External Secrets Operator to be ready
+  shell: |
+    kubectl wait --namespace external-secrets \
+      --for=condition=available deployment \
+      --timeout=600s external-secrets
+  environment:
+    KUBECONFIG: /home/k8s/.kube/config
 
 - name: Create ClusterSecretStore for Vault
   shell: |
@@ -95,43 +145,7 @@
                 namespace: external-secrets
     EOF
   environment:
-    KUBECONFIG: /home/kind/.kube/config
-
-# Install External Secrets Operator
-- name: Install External Secrets Operator
-  shell: |
-    kubectl apply -f https://github.com/external-secrets/external-secrets/releases/latest/download/install-bundle.yaml
-  environment:
-    KUBECONFIG: /home/kind/.kube/config
-
-- name: Wait for External Secrets Operator to be ready
-  shell: |
-    kubectl wait --namespace external-secrets \
-      --for=condition=available deployment \
-      --timeout=600s external-secrets
-  environment:
-    KUBECONFIG: /home/kind/.kube/config
-
-- name: Create ClusterSecretStore for Vault
-  shell: |
-    kubectl apply -f - <<EOF
-    apiVersion: external-secrets.io/v1beta1
-    kind: ClusterSecretStore
-    metadata:
-      name: vault-secret-store
-    spec:
-      provider:
-        vault:
-          server: "http://vault.default.svc.cluster.local:8200"
-          path: "secret/"
-          version: "v2"
-          auth:
-            tokenSecretRef:
-              name: vault-token
-              key: token
-    EOF
-  environment:
-    KUBECONFIG: /home/kind/.kube/config
+    KUBECONFIG: /home/k8s/.kube/config
 
 - name: Create Vault Token Secret
   shell: |
@@ -139,7 +153,7 @@
       --from-literal=token=<your-vault-token> \
       --namespace default || true
   environment:
-    KUBECONFIG: /home/kind/.kube/config
+    KUBECONFIG: /home/k8s/.kube/config
 
 - name: Create CronJob to Refresh Vault Token
   shell: |
@@ -176,4 +190,4 @@
               restartPolicy: OnFailure
     EOF
   environment:
-    KUBECONFIG: /home/kind/.kube/config
+    KUBECONFIG: /home/k8s/.kube/config
