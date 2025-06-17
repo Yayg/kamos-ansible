@@ -9,22 +9,21 @@
 
 - name: Get latest Vault chart version
   shell: |
-    helm search repo hashicorp/vault --devel -o json | jq -r '.[0].version'
-  register: vault_chart_version_result
+    helm search repo hashicorp/vault --devel -o json | jq -r '.[0].app_version'
+  register: vault_app_version_result
   changed_when: false
   environment:
     KUBECONFIG: /home/k8s/.kube/config
 
 - name: Set latest Vault chart version fact
   set_fact:
-    vault_chart_version: "{{ vault_chart_version_result.stdout }}"
+    vault_app_version: "{{ vault_app_version_result.stdout }}"
 
 - name: Check if Vault Helm release exists
-  community.general.helm_info:
+  community.kubernetes.helm_info:
     release_name: vault
-    kube_context: ""
-    namespace: vault
-    kubeconfig: /home/kind/.kube/config
+    release_namespace: vault
+    kubeconfig: /home/k8s/.kube/config
   register: vault_helm_info
   ignore_errors: yes
 
@@ -32,13 +31,12 @@
   community.kubernetes.helm:
     name: vault
     chart_ref: hashicorp/vault
-    chart_version: "{{ vault_chart_version }}"
     namespace: vault
     state: present
   register: vault_helm_deploy
-  when: vault_helm_info.failed or
-        vault_helm_info.release is not defined or
-        vault_helm_info.release.chart.version != vault_chart_version
+  when: vault_helm_info.status is not defined or
+        vault_helm_info.status.status == "FAILED" or
+        vault_helm_info.status.appversion != vault_app_version
 
 - name: Wait for Vault to be ready
   shell: |
