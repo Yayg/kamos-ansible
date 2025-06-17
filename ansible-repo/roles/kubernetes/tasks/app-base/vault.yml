@@ -58,6 +58,10 @@
   environment:
     KUBECONFIG: /home/k8s/.kube/config
 
+- name: Debug vault_initialized value
+  debug:
+    var: vault_initialized
+
 - name: Initialize Vault (only if not initialized)
   shell: |
     kubectl exec -n vault vault-0 -- vault operator init -key-shares=1 -key-threshold=1 -format=json > /tmp/vault-init.json
@@ -76,6 +80,7 @@
   shell: |
     VAULT_UNSEAL_KEY=$(jq -r ".unseal_keys_b64[0]" /tmp/vault-init.json)
     kubectl exec -n vault vault-0 -- vault operator unseal $VAULT_UNSEAL_KEY
+  when: vault_helm_deploy.changed
   environment:
     KUBECONFIG: /home/k8s/.kube/config
 
