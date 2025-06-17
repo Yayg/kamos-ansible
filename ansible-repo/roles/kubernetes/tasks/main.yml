@@ -15,8 +15,6 @@
     curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
     chmod +x kubectl
     mv kubectl /usr/bin/kubectl
-  args:
-    creates: kubectl
 
 - name: Verify kubectl installation
   command: kubectl version --client
@@ -25,8 +23,6 @@
 - name: Install Helm
   shell: |
     curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | HELM_INSTALL_DIR=/usr/bin/ bash -s
-  args:
-    creates: /usr/bin/helm
 
 # Create a user for Kubernetes
 - name: Create kubernetes user

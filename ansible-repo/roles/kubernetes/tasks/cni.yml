@@ -7,8 +7,6 @@
     chmod +x cilium
     mkdir -p /home/k8s/.local/bin
     mv cilium /home/k8s/.local/bin/
-  args:
-    creates: /home/k8s/.local/bin/cilium
 
 - name: Check if Cilium is installed
   shell: |
