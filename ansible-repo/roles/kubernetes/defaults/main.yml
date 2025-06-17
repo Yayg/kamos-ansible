@@ -1,4 +1,6 @@
 ---
 microk8s_addons:
+  - community
   - dns
   - storage
+  - cilium

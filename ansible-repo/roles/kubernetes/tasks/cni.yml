@@ -16,11 +16,3 @@
   register: cilium_status
   failed_when: false
   changed_when: false
-
-- name: Deploy or Update Cilium
-  shell: |
-    /home/k8s/.local/bin/cilium install --restart-unmanaged
-    /home/k8s/.local/bin/cilium status --wait
-  when: cilium_status.rc != 0 or cilium_status.stdout is search("needs update")
-  environment:
-    KUBECONFIG: /home/k8s/.kube/config
