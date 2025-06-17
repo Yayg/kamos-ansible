@@ -101,12 +101,10 @@
       }
 
 - name: Copy Vault Policy file to vault-0 pod
-  kubernetes.core.k8s_cp:
-    local_path: /tmp/external-secrets-policy.hcl
-    namespace: vault
-    pod: vault-0
-    remote_path: /tmp/external-secrets-policy.hcl
-    kubeconfig: /home/k8s/.kube/config
+  shell: |
+    kubectl cp /tmp/external-secrets-policy.hcl vault/vault-0:/tmp/external-secrets-policy.hcl --kubeconfig /home/k8s/.kube/config
+  environment:
+    KUBECONFIG: /home/k8s/.kube/config
 
 - name: Write Vault Policy for External Secrets
   shell: |
