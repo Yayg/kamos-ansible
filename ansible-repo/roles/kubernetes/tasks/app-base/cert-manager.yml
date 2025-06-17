@@ -10,24 +10,60 @@
         return_content: yes
       register: public_ip
 
-    - name: Update Dynu DDNS record
-      uri:
-        url: "https://api.dynu.com/nic/update"
+    - name: Update Dynu DDNS record using curl and API
+      ansible.builtin.uri:
+        url: "https://api.dynu.com/v2/dns"
         method: GET
-        return_content: yes
         headers:
           accept: "application/json"
-        user: "{{ dynu_hostname }}"
-        password: "{{ dynu_api_key }}"
-        body_format: form-urlencoded
-        params:
-          hostname: "{{ dynu_hostname }}"
-          myip: "{{ public_ip.content }}"
-      register: dynu_update_result
+          API-Key: "{{ dynu_api_key }}"
+        return_content: yes
+      register: dynu_dns_list
 
+    - name: Find DNS record ID for hostname
+      set_fact:
+        dynu_dns_id: "{{ item.id }}"
+      loop: "{{ (dynu_dns_list.json | default([])).domains | default([]) }}"
+      when: item.name == dynu_hostname
+      register: dynu_dns_id_result
+
+    - name: Update Dynu DDNS record with current public IP
+      ansible.builtin.uri:
+        url: "https://api.dynu.com/v2/dns/{{ dynu_dns_id_result.results[0].ansible_facts.dynu_dns_id }}/record"
+        method: GET
+        headers:
+          accept: "application/json"
+          API-Key: "{{ dynu_api_key }}"
+        return_content: yes
+      register: dynu_dns_records
+
+    - name: Find A record ID for hostname
+      set_fact:
+        dynu_a_record_id: "{{ item.id }}"
+      loop: "{{ (dynu_dns_records.json | default([])).dnsRecords | default([]) }}"
+      when: item.type == 'A' and item.hostname == dynu_hostname
+      register: dynu_a_record_id_result
+
+    - name: Update A record with current public IP
+      ansible.builtin.uri:
+        url: "https://api.dynu.com/v2/dns/{{ dynu_dns_id_result.results[0].ansible_facts.dynu_dns_id }}/record/{{ dynu_a_record_id_result.results[0].ansible_facts.dynu_a_record_id }}"
+        method: POST
+        headers:
+          accept: "application/json"
+          API-Key: "{{ dynu_api_key }}"
+          Content-Type: "application/json"
+        body_format: json
+        body:
+          hostname: "{{ dynu_hostname }}"
+          nodeName: ""
+          recordType: "A"
+          content: "{{ public_ip.content }}"
+          ttl: 120
+      register: dynu_update_result
+      
     - name: Show Dynu DDNS update result
       debug:
-        var: dynu_update_result.content
+      var: dynu_update_result.stdout
 
 - name: Create ClusterIssuer for Let's Encrypt (Staging)
   kubernetes.core.k8s:
