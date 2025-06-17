@@ -46,16 +46,9 @@
       debug:
         var: dynu_list
 
-    - name: Find A record ID for hostname
-      set_fact:
-        dynu_a_record_id: "{{ item.id }}"
-      loop: "{{ (dynu_dns_records.json | default([])).dnsRecords | default([]) }}"
-      when: item.type == 'A' and item.hostname == dynu_hostname
-      register: dynu_a_record_id_result
-
-    - name: Update A record with current public IP
+    - name: Update IP record with current public IP
       ansible.builtin.uri:
-        url: "https://api.dynu.com/v2/dns/{{ dynu_dns_id_result.results[0].ansible_facts.dynu_dns_id }}/record/{{ dynu_a_record_id_result.results[0].ansible_facts.dynu_a_record_id }}"
+        url: "https://api.dynu.com/v2/dns/{{ dynu_dns_id_result.results[0].ansible_facts.dynu_dns_id }}"
         method: POST
         headers:
           accept: "application/json"
@@ -64,10 +57,7 @@
         body_format: json
         body:
           hostname: "{{ dynu_hostname }}"
-          nodeName: ""
-          recordType: "A"
-          content: "{{ public_ip.content }}"
-          ttl: 120
+          ipv4Address: "{{ public_ip.content }}"
       register: dynu_update_result
       
     - name: Show Dynu DDNS update result
