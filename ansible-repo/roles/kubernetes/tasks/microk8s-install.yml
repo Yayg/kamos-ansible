@@ -1,8 +1,9 @@
 - name: Export MicroK8s kubeconfig to k8s user home
   shell: |
-    mkdir -p ~/.kube
-    microk8s config > ~/.kube/config
-    chmod 600 ~/.kube/config
+    mkdir -p /home/k8s/.kube
+    microk8s config > /home/k8s/.kube/config
+    chown -R k8s:k8s /home/k8s/.kube
+    chmod 600 /home/k8s/.kube/config
   environment:
     PATH: "/snap/bin:{{ ansible_env.PATH }}"
   args:
