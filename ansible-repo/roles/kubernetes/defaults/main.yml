@@ -2,6 +2,7 @@
 microk8s_addons:
   - community
   - cis-hardening
+  - kubearmor
   - dns
   - storage
   - ingress
