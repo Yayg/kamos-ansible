@@ -8,9 +8,9 @@ microk8s_addons:
   - ingress
   - cert-manager
   - prometheus
-  - registry
   - helm3
   - istio
   - metrics-server
+#  - registry
 #  - cilium
 #  - metallb
