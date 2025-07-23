@@ -4,7 +4,7 @@ microk8s_addons:
   - cis-hardening
   - kubearmor
   - dns
-  - storage
+  - openebs
   - ingress
   - cert-manager
   - prometheus
