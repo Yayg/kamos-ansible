@@ -1,8 +1,15 @@
 ---
 microk8s_addons:
   - community
+  - cis-hardening
   - dns
   - storage
-  - cilium
   - ingress
   - cert-manager
+  - prometheus
+  - registry
+  - helm3
+  - istio
+  - metrics-server
+#  - cilium
+#  - metallb
