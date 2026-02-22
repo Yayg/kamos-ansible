@@ -17,7 +17,8 @@
 
 - name: Install Cilium to the cluster
   shell: |
-    /home/k8s/.local/bin/cilium install
+    /home/k8s/.local/bin/cilium install --set=ipam.operator.clusterPoolIPv4PodCIDRList="10.42.0.0/16"
+
   register: cilium_install
   when: cilium_status.rc != 0
   args:
@@ -25,7 +26,7 @@
 
 - name: Upgrade Cilium if already installed
   shell: |
-    /home/k8s/.local/bin/cilium upgrade
+    /home/k8s/.local/bin/cilium upgrade --set=ipam.operator.clusterPoolIPv4PodCIDRList="10.42.0.0/16"
   register: cilium_upgrade
   when: cilium_status.rc == 0
   args:
