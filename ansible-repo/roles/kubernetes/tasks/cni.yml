@@ -14,3 +14,21 @@
   register: cilium_status
   failed_when: false
   changed_when: false
+
+- name: Install Cilium to the cluster
+  shell: |
+    /home/k8s/.local/bin/cilium install --version latest
+  register: cilium_install
+  when: "'Cilium is not running' in cilium_status.stdout or cilium_status.rc != 0"
+  args:
+    executable: /bin/bash
+
+- name: Wait for Cilium to be ready
+  shell: |
+    /home/k8s/.local/bin/cilium status --wait
+  retries: 30
+  delay: 10
+  register: cilium_ready
+  until: cilium_ready.rc == 0
+  args:
+    executable: /bin/bash
