@@ -17,9 +17,17 @@
 
 - name: Install Cilium to the cluster
   shell: |
-    /home/k8s/.local/bin/cilium install --version latest
+    /home/k8s/.local/bin/cilium install
   register: cilium_install
-  when: "'Cilium is not running' in cilium_status.stdout or cilium_status.rc != 0"
+  when: cilium_status.rc != 0
+  args:
+    executable: /bin/bash
+
+- name: Upgrade Cilium if already installed
+  shell: |
+    /home/k8s/.local/bin/cilium upgrade
+  register: cilium_upgrade
+  when: cilium_status.rc == 0
   args:
     executable: /bin/bash
 
