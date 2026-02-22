@@ -7,7 +7,6 @@
     chmod +x cilium
     mkdir -p /home/k8s/.local/bin
     mv cilium /home/k8s/.local/bin/
-    kubectl patch storageclass openebs-device -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
 
 - name: Check if Cilium is installed
   shell: |
