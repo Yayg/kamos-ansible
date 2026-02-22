@@ -34,61 +34,68 @@
     state: present
     shell: /bin/bash
 
-- name: Install MicroK8s
-  snap:
-    name: microk8s
-    classic: yes
-    state: enabled
+- name: Check if k3s is already installed
+  stat:
+    path: /usr/local/bin/k3s
+  register: k3s_installed
 
-- name: Add user to microk8s group
-  user:
-    name: k8s
-    groups: microk8s
-    append: yes
-
-- name: Enable MicroK8s addons
+- name: Install k3s
   shell: |
-    microk8s enable {{ item }}
-  loop: "{{ microk8s_addons }}"
+    curl -sfL https://get.k3s.io | sh -
   args:
     executable: /bin/bash
+  when: not k3s_installed.stat.exists
 
-- name: Upgrade MicroK8s addons
+- name: Wait for k3s to be ready
   shell: |
-    microk8s enable {{ item }}:upgrade
-  loop: "{{ microk8s_addons }}"
+    k3s kubectl get nodes
+  retries: 30
+  delay: 10
+  until: result is succeeded
+  register: result
+
+- name: Create .kube directory for k8s user
+  file:
+    path: /home/k8s/.kube
+    state: directory
+    owner: k8s
+    group: k8s
+    mode: '0755'
+
+- name: Copy k3s kubeconfig to k8s user home
+  shell: |
+    cp /etc/rancher/k3s/k3s.yaml /home/k8s/.kube/config
+    chown k8s:k8s /home/k8s/.kube/config
+    chmod 600 /home/k8s/.kube/config
   args:
     executable: /bin/bash
-
-# Export MicroK8s kubeconfig to k8s user home
-- import_tasks: microk8s-install.yml
 
 # Post-installation tasks
 
-## Install Cilium CNI
-- import_tasks: cni.yml
-  become: yes
-  become_user: k8s
-  become_method: sudo 
-  become_flags: "-i"
-
-## Install Vault
-- import_tasks: app-base/cert-manager.yml
-  become: yes
-  become_user: k8s
-  become_method: sudo 
-  become_flags: "-i"
-
-## Install Vault
-- import_tasks: app-base/vault.yml
-  become: yes
-  become_user: k8s
-  become_method: sudo 
-  become_flags: "-i"
-
-## Install Vault
-- import_tasks: app-base/cd.yml
-  become: yes
-  become_user: k8s
-  become_method: sudo 
-  become_flags: "-i"
+### Install Cilium CNI
+#- import_tasks: cni.yml
+#  become: yes
+#  become_user: k8s
+#  become_method: sudo 
+#  become_flags: "-i"
+#
+### Install Vault
+#- import_tasks: app-base/cert-manager.yml
+#  become: yes
+#  become_user: k8s
+#  become_method: sudo 
+#  become_flags: "-i"
+#
+### Install Vault
+#- import_tasks: app-base/vault.yml
+#  become: yes
+#  become_user: k8s
+#  become_method: sudo 
+#  become_flags: "-i"
+#
+### Install Vault
+#- import_tasks: app-base/cd.yml
+#  become: yes
+#  become_user: k8s
+#  become_method: sudo 
+#  become_flags: "-i"
