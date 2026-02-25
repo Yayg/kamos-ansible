@@ -79,7 +79,7 @@
   become_method: sudo 
   become_flags: "-i"
 
-## Install Vault
+## Install Cert-manager
 - import_tasks: app-base/cert-manager.yml
   become: yes
   become_user: k8s

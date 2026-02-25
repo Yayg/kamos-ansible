@@ -34,9 +34,10 @@
 - name: Wait for Cilium to be ready
   shell: |
     /home/k8s/.local/bin/cilium status --wait
-  retries: 30
-  delay: 10
+  retries: 3
+  delay: 30
   register: cilium_ready
   until: cilium_ready.rc == 0
+  when: cilium_status.rc == 0
   args:
     executable: /bin/bash
