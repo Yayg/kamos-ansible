@@ -17,7 +17,12 @@
 
 - name: Install Cilium to the cluster
   shell: |
-    /home/k8s/.local/bin/cilium install --set=ipam.operator.clusterPoolIPv4PodCIDRList="10.42.0.0/16"
+    /home/k8s/.local/bin/cilium install \
+      --set=ipam.operator.clusterPoolIPv4PodCIDRList="10.42.0.0/16" \
+      --set kubeProxyReplacement=true \
+      --set k8sServiceHost=$(hostname -i) \
+      --set k8sServicePort=6443 \
+      --namespace cilium
   register: cilium_install
   when: cilium_status.rc != 0
   args:

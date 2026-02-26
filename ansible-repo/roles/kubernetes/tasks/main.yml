@@ -41,7 +41,9 @@
 
 - name: Install k3s
   shell: |
-    curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC='--flannel-backend=none --disable-kube-proxy --disable-network-policy' sh -
+    curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC='' sh - \   
+    --flannel-backend=none --disable-kube-proxy --disable-network-policy \
+    --disable servicelb --disable traefik --cluster-init
   args:
     executable: /bin/bash
   when: not k3s_installed.stat.exists
