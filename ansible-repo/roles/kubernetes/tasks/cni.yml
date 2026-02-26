@@ -21,8 +21,7 @@
       --set=ipam.operator.clusterPoolIPv4PodCIDRList="10.42.0.0/16" \
       --set kubeProxyReplacement=true \
       --set k8sServiceHost=$(hostname -i) \
-      --set k8sServicePort=6443 \
-      --namespace cilium
+      --set k8sServicePort=6443
   register: cilium_install
   when: cilium_status.rc != 0
   args:
