@@ -29,7 +29,7 @@
 
 - name: Upgrade Cilium if already installed
   shell: |
-    /home/k8s/.local/bin/cilium install \
+    /home/k8s/.local/bin/cilium upgrade \
       --set=ipam.operator.clusterPoolIPv4PodCIDRList="10.42.0.0/16" \
       --set kubeProxyReplacement=true \
       --set k8sServiceHost=127.0.0.1 \
