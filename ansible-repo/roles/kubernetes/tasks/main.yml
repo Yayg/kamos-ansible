@@ -103,6 +103,13 @@
   become_method: sudo 
   become_flags: "-i"
 
+## Install ExternalSecrets
+- import_tasks: app-base/external-secrets.yml
+  become: yes
+  become_user: k8s
+  become_method: sudo 
+  become_flags: "-i"
+
 ### Install ArgoCD
 #- import_tasks: app-base/cd.yml
 #  become: yes
