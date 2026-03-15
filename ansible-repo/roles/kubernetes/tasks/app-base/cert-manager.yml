@@ -73,7 +73,7 @@
           solvers:
             - http01:
                 ingress:
-                  class: nginx
+                  class: traefik
 
 - name: Create ClusterIssuer for Let's Encrypt (Production)
   kubernetes.core.k8s:
@@ -92,4 +92,4 @@
           solvers:
             - http01:
                 ingress:
-                  class: nginx
+                  class: traefik
