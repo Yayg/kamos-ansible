@@ -104,7 +104,7 @@
   become_flags: "-i"
 
 ## Install ExternalSecrets
-- import_tasks: app-base/external-secrets.yml
+- import_tasks: app-base/external-secret.yml
   become: yes
   become_user: k8s
   become_method: sudo 
