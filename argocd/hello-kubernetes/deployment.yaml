@@ -45,8 +45,14 @@ kind: Ingress
 metadata:
   name: hello-kubernetes
   namespace: default
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
 spec:
-  ingressClassName: nginx
+  ingressClassName: traefik
+  tls:
+    - secretName: hello-kubernetes-tls
+      hosts:
+        - hello.kamos.freeddns.org
   rules:
   - host: hello.kamos.freeddns.org
     http:
