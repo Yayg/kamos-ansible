@@ -17,20 +17,7 @@
     values:
       server:
         ingress:
-          enabled: true
-          ingressClassName: traefik
-          hosts:
-            - argo.kamos.freeddns.org
-          paths:
-            - /
-          pathType: Prefix
-          tls:
-            - secretName: argocd-tls
-              hosts:
-                - argo.kamos.freeddns.org
-          annotations:
-            cert-manager.io/cluster-issuer: letsencrypt-prod
-        # Disable default ingress
+          enabled: false
         ingressGrpc:
           enabled: false
       config:
@@ -44,6 +31,37 @@
     kubectl wait --namespace argocd \
       --for=condition=available deployment \
       --timeout=600s argocd-server
+  environment:
+    KUBECONFIG: /home/k8s/.kube/config
+
+- name: Create ArgoCD ingress with cert-manager
+  shell: |
+    kubectl apply -f - <<EOF
+    apiVersion: networking.k8s.io/v1
+    kind: Ingress
+    metadata:
+      name: argocd-server
+      namespace: argocd
+      annotations:
+        cert-manager.io/cluster-issuer: letsencrypt-prod
+    spec:
+      ingressClassName: traefik
+      tls:
+        - secretName: argocd-tls
+          hosts:
+            - argo.kamos.freeddns.org
+      rules:
+        - host: argo.kamos.freeddns.org
+          http:
+            paths:
+              - path: /
+                pathType: Prefix
+                backend:
+                  service:
+                    name: argocd-server
+                    port:
+                      number: 80
+    EOF
   environment:
     KUBECONFIG: /home/k8s/.kube/config
 
