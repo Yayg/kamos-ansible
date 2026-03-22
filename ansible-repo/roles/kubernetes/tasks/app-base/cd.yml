@@ -1,39 +1,10 @@
 # Install ArgoCD
-- name: Add ArgoCD Helm repository
-  shell: |
-    helm repo add argo https://argoproj.github.io/argo-helm
-    helm repo update
+- name: Create ArgoCD namespace
+  shell: kubectl create namespace argocd --dry-run=client -o yaml | kubectl apply -f -
   environment:
     KUBECONFIG: /home/k8s/.kube/config
 
-- name: Install or Upgrade ArgoCD
-  community.kubernetes.helm:
-    name: argocd
-    chart_ref: argo/argo-cd
-    namespace: argocd
-    create_namespace: yes
-    state: present
-    update_repo_cache: yes
-    values:
-      server:
-        ingress:
-          enabled: false
-          forceHttps: false
-      config:
-        rbac:
-          policy.default: role:admin
-  environment:
-    KUBECONFIG: /home/k8s/.kube/config
-
-- name: Wait for ArgoCD server to be ready
-  shell: |
-    kubectl wait --namespace argocd \
-      --for=condition=available deployment \
-      --timeout=600s argocd-server
-  environment:
-    KUBECONFIG: /home/k8s/.kube/config
-
-- name: Create ArgoCD ingress with cert-manager
+- name: Create ArgoCD ingress with cert-manager certificate
   shell: |
     kubectl apply -f - <<EOF
     apiVersion: networking.k8s.io/v1
@@ -61,6 +32,38 @@
                     port:
                       number: 80
     EOF
+  environment:
+    KUBECONFIG: /home/k8s/.kube/config
+
+- name: Wait for cert-manager to generate the certificate
+  shell: |
+    kubectl wait --for=condition=ready certificate argocd-tls -n argocd --timeout=300s || true
+  environment:
+    KUBECONFIG: /home/k8s/.kube/config
+
+- name: Add ArgoCD Helm repository
+  shell: |
+    helm repo add argo https://argoproj.github.io/argo-helm
+    helm repo update
+  environment:
+    KUBECONFIG: /home/k8s/.kube/config
+
+- name: Install or Upgrade ArgoCD with existing TLS certificate
+  community.kubernetes.helm:
+    name: argocd
+    chart_ref: argo/argo-cd
+    namespace: argocd
+    create_namespace: no
+    state: present
+    update_repo_cache: yes
+    values:
+      server:
+        ingress:
+          enabled: false
+          tls: true
+      config:
+        rbac:
+          policy.default: role:admin
   environment:
     KUBECONFIG: /home/k8s/.kube/config
 
