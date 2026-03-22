@@ -94,14 +94,14 @@
     apiVersion: argoproj.io/v1alpha1
     kind: Application
     metadata:
-      name: kamos-cluster-apps
+      name: cluster-apps
       namespace: argocd
     spec:
       project: default
       source:
         repoURL: 'https://github.com/Yayg/kamos-ansible.git'
         targetRevision: HEAD
-        path: argocd
+        path: argocd/applications
         directory:
           recurse: true
       destination:
