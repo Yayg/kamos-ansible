@@ -61,6 +61,8 @@
         ingress:
           enabled: false
           tls: true
+        extraArgs:
+          - --insecure
       config:
         rbac:
           policy.default: role:admin
