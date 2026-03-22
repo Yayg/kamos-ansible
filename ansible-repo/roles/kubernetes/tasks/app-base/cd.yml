@@ -30,6 +30,9 @@
                 - argo.kamos.freeddns.org
           annotations:
             cert-manager.io/cluster-issuer: letsencrypt-prod
+        # Disable default ingress
+        ingressGrpc:
+          enabled: false
       config:
         rbac:
           policy.default: role:admin
