@@ -88,7 +88,7 @@
   environment:
     KUBECONFIG: /home/k8s/.kube/config
 
-- name: Configure ArgoCD to deploy applications from argocd directory
+- name: Create ArgoCD Application with recursive directory scanning
   shell: |
     kubectl apply -f - <<EOF
     apiVersion: argoproj.io/v1alpha1
@@ -102,6 +102,8 @@
         repoURL: 'https://github.com/Yayg/kamos-ansible.git'
         targetRevision: HEAD
         path: argocd
+        directory:
+          recurse: true
       destination:
         server: 'https://kubernetes.default.svc'
         namespace: default
