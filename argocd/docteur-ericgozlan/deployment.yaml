@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: docteur-ericgozlan
-        image: ghcr.io/Yayg/docteur-ericgozlan.fr
+        image: ghcr.io/yayg/docteur-ericgozlan.fr:latest
         ports:
         - containerPort: 80
 ---
