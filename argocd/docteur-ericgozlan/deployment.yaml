@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: docteur-ericgozlan
+  namespace: docteur-ericgozlan
+  labels:
+    app: docteur-ericgozlan
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: docteur-ericgozlan
+  template:
+    metadata:
+      labels:
+        app: docteur-ericgozlan
+    spec:
+      containers:
+      - name: docteur-ericgozlan
+        image: ghcr.io/Yayg/docteur-ericgozlan.fr
+        ports:
+        - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: docteur-ericgozlan
+  namespace: docteur-ericgozlan
+  labels:
+    app: docteur-ericgozlan
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 80
+    protocol: TCP
+  selector:
+    app: docteur-ericgozlan
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: docteur-ericgozlan
+  namespace: docteur-ericgozlan
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  ingressClassName: traefik
+  tls:
+    - secretName: docteur-ericgozlan-tls
+      hosts:
+        - docteur-ericgozlan.kamos.freeddns.org
+  rules:
+  - host: docteur-ericgozlan.kamos.freeddns.org
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: docteur-ericgozlan
+            port:
+              number: 80
