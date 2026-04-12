@@ -51,7 +51,12 @@ spec:
     - secretName: docteur-ericgozlan-tls
       hosts:
         - docteur-ericgozlan.kamos.freeddns.org
+    - secretName: docteur-ericgozlan-fr-tls
+      hosts:
         - docteur-ericgozlan.fr
+    - secretName: docteur-ericgozlan-www-tls
+      hosts:
+        - www.docteur-ericgozlan.fr
   rules:
   - host: docteur-ericgozlan.kamos.freeddns.org
     http:
@@ -64,6 +69,16 @@ spec:
             port:
               number: 80
   - host: docteur-ericgozlan.fr
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: docteur-ericgozlan
+            port:
+              number: 80
+  - host: www.docteur-ericgozlan.fr
     http:
       paths:
       - path: /
