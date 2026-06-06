@@ -1,0 +1,88 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: home-assistant-config
+  namespace: default
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: home-assistant
+  namespace: default
+  labels:
+    app: home-assistant
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: home-assistant
+  template:
+    metadata:
+      labels:
+        app: home-assistant
+    spec:
+      containers:
+        - name: home-assistant
+          image: ghcr.io/home-assistant/home-assistant:stable
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8123
+              name: http
+          env:
+            - name: TZ
+              value: Europe/Paris
+          volumeMounts:
+            - name: config
+              mountPath: /config
+      volumes:
+        - name: config
+          persistentVolumeClaim:
+            claimName: home-assistant-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: home-assistant
+  namespace: default
+  labels:
+    app: home-assistant
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 8123
+      protocol: TCP
+      name: http
+  selector:
+    app: home-assistant
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: home-assistant
+  namespace: default
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  ingressClassName: traefik
+  tls:
+    - secretName: home-assistant-tls
+      hosts:
+        - home.kamos.freeddns.org
+  rules:
+    - host: home.kamos.freeddns.org
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: home-assistant
+                port:
+                  number: 80
