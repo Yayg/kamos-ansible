@@ -2,7 +2,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: home-assistant-config
-  namespace: default
+  namespace: home-assistant
 spec:
   accessModes:
     - ReadWriteOnce
@@ -14,7 +14,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: home-assistant
-  namespace: default
+  namespace: home-assistant
   labels:
     app: home-assistant
 spec:
@@ -40,16 +40,22 @@ spec:
           volumeMounts:
             - name: config
               mountPath: /config
+            - name: home-assistant-config-file
+              mountPath: /config/configuration.yaml
+              subPath: configuration.yaml
       volumes:
         - name: config
           persistentVolumeClaim:
             claimName: home-assistant-config
+        - name: home-assistant-config-file
+          configMap:
+            name: home-assistant-config
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: home-assistant
-  namespace: default
+  namespace: home-assistant
   labels:
     app: home-assistant
 spec:
@@ -66,7 +72,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: home-assistant
-  namespace: default
+  namespace: home-assistant
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
 spec:
