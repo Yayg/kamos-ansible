@@ -56,7 +56,7 @@ spec:
             - name: HASS_HTTP_USE_X_FORWARDED_FOR
               value: "true"
             - name: HASS_HTTP_TRUSTED_PROXIES
-              value: "10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
+              value: "10.42.0.0/16,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
             - name: HASS_HTTP_IP_BAN_ENABLED
               value: "false"
           volumeMounts:
