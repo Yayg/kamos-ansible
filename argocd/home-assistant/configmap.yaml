@@ -9,6 +9,11 @@ data:
   configuration.yaml: |
     default_config:
 
+    history:
+
+    recorder:
+      purge_keep_days: 365
+
     cloud:
 
     http:
