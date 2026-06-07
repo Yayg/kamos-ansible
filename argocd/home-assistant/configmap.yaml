@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: home-assistant-config-seed
+  namespace: home-assistant
+  labels:
+    app: home-assistant
+data:
+  configuration.yaml: |
+    default_config:
+
+    cloud:
+
+    http:
+      use_x_forwarded_for: true
+      trusted_proxies:
+        - 10.0.0.0/8
+        - 172.16.0.0/12
+        - 192.168.0.0/16
+      ip_ban_enabled: false
