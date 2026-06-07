@@ -38,9 +38,6 @@ spec:
               mkdir -p /config
               if [ ! -f /config/configuration.yaml ]; then
                 cp /seed/configuration.yaml /config/configuration.yaml
-              else
-                :
-              fi
               fi
           volumeMounts:
             - name: config
