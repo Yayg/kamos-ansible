@@ -51,6 +51,8 @@ spec:
         - name: home-assistant
           image: ghcr.io/home-assistant/home-assistant:stable
           imagePullPolicy: IfNotPresent
+          securityContext:
+            privileged: true
           ports:
             - containerPort: 8123
               name: http
@@ -66,10 +68,17 @@ spec:
           volumeMounts:
             - name: config
               mountPath: /config
+            - name: serial
+              mountPath: /dev/serial/by-id
+              readOnly: true
       volumes:
         - name: config
           persistentVolumeClaim:
             claimName: home-assistant-config
+        - name: serial
+          hostPath:
+            path: /dev/serial/by-id
+            type: Directory
         - name: config-seed
           configMap:
             name: home-assistant-config-seed
