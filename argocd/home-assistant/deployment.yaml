@@ -38,6 +38,36 @@ spec:
               mkdir -p /config
               if [ ! -f /config/configuration.yaml ]; then
                 cp /seed/configuration.yaml /config/configuration.yaml
+              else
+                pip install --no-cache-dir pyyaml >/dev/null 2>&1
+                python - <<'PY'
+                  import pathlib
+                  import yaml
+
+                  path = pathlib.Path('/config/configuration.yaml')
+                  text = path.read_text(encoding='utf-8')
+
+                  data = yaml.safe_load(text) if text.strip() else {}
+                  if not isinstance(data, dict):
+                      data = {}
+
+                  http_cfg = {
+                      'use_x_forwarded_for': True,
+                      'trusted_proxies': [
+                          '10.42.0.0/16',
+                          '10.0.0.0/8',
+                          '172.16.0.0/12',
+                          '192.168.0.0/16',
+                      ],
+                      'ip_ban_enabled': False,
+                  }
+
+                  data.setdefault('http', {})
+                  for key, value in http_cfg.items():
+                      data['http'][key] = value
+
+                  path.write_text(yaml.safe_dump(data, sort_keys=False, allow_unicode=True), encoding='utf-8')
+                PY
               fi
           volumeMounts:
             - name: config
@@ -54,6 +84,12 @@ spec:
           env:
             - name: TZ
               value: Europe/Paris
+            - name: HASS_HTTP_USE_X_FORWARDED_FOR
+              value: "true"
+            - name: HASS_HTTP_TRUSTED_PROXIES
+              value: "10.42.0.0/16,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
+            - name: HASS_HTTP_IP_BAN_ENABLED
+              value: "false"
           volumeMounts:
             - name: config
               mountPath: /config
