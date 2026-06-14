@@ -14,3 +14,7 @@ microk8s_addons:
 #  - registry
 #  - cilium
 #  - metallb
+
+external_secrets_vault_token_namespaces:
+  - default
+  - openclaw
