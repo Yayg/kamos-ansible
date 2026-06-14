@@ -1,0 +1,33 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kagent
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  project: default
+  source:
+    repoURL: ghcr.io/kagent-dev/kagent/helm
+    chart: kagent
+    targetRevision: 0.9.7
+    helm:
+      values: |
+        providers:
+          default: ollama
+          ollama:
+            provider: Ollama
+            model: "llama3.2:3b"
+            config:
+              host: ollama.openclaw.svc.cluster.local:11434
+        ui:
+          publicBackendUrl: /api
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: kagent
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
