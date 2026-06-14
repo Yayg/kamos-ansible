@@ -1,0 +1,320 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: openclaw-data
+  namespace: openclaw
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: openclaw-local-data
+  namespace: openclaw
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ollama-data
+  namespace: openclaw
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: openclaw
+  namespace: openclaw
+  labels:
+    app: openclaw
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: openclaw
+  template:
+    metadata:
+      labels:
+        app: openclaw
+    spec:
+      containers:
+        - name: openclaw
+          image: ghcr.io/openclaw/openclaw:latest
+          imagePullPolicy: IfNotPresent
+          args:
+            - gateway
+          env:
+            - name: OPENCLAW_CONFIG_PATH
+              value: /config/openclaw.json
+            - name: OPENCLAW_STATE_DIR
+              value: /data
+            - name: HOME
+              value: /data
+            - name: OPENCLAW_GATEWAY_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: openclaw-secrets
+                  key: OPENCLAW_GATEWAY_TOKEN
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: openclaw-secrets
+                  key: OPENAI_API_KEY
+                  optional: true
+            - name: ANTHROPIC_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: openclaw-secrets
+                  key: ANTHROPIC_API_KEY
+                  optional: true
+            - name: GEMINI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: openclaw-secrets
+                  key: GEMINI_API_KEY
+                  optional: true
+            - name: OPENROUTER_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: openclaw-secrets
+                  key: OPENROUTER_API_KEY
+                  optional: true
+          ports:
+            - containerPort: 18789
+              name: http
+          volumeMounts:
+            - name: openclaw-data
+              mountPath: /data
+            - name: openclaw-config
+              mountPath: /config
+              readOnly: true
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: false
+      volumes:
+        - name: openclaw-data
+          persistentVolumeClaim:
+            claimName: openclaw-data
+        - name: openclaw-config
+          configMap:
+            name: openclaw-config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: openclaw-local
+  namespace: openclaw
+  labels:
+    app: openclaw-local
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: openclaw-local
+  template:
+    metadata:
+      labels:
+        app: openclaw-local
+    spec:
+      containers:
+        - name: openclaw-local
+          image: ghcr.io/openclaw/openclaw:latest
+          imagePullPolicy: IfNotPresent
+          args:
+            - gateway
+          env:
+            - name: OPENCLAW_CONFIG_PATH
+              value: /config/openclaw-local.json
+            - name: OPENCLAW_STATE_DIR
+              value: /data
+            - name: HOME
+              value: /data
+            - name: OPENCLAW_GATEWAY_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: openclaw-secrets
+                  key: OPENCLAW_GATEWAY_TOKEN
+          ports:
+            - containerPort: 18800
+              name: http
+          volumeMounts:
+            - name: openclaw-local-data
+              mountPath: /data
+            - name: openclaw-config
+              mountPath: /config
+              readOnly: true
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+      volumes:
+        - name: openclaw-local-data
+          persistentVolumeClaim:
+            claimName: openclaw-local-data
+        - name: openclaw-config
+          configMap:
+            name: openclaw-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: openclaw-local
+  namespace: openclaw
+  labels:
+    app: openclaw-local
+spec:
+  type: ClusterIP
+  selector:
+    app: openclaw-local
+  ports:
+    - name: http
+      port: 18800
+      targetPort: 18800
+      protocol: TCP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ollama
+  namespace: openclaw
+  labels:
+    app: ollama
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ollama
+  template:
+    metadata:
+      labels:
+        app: ollama
+    spec:
+      containers:
+        - name: ollama
+          image: ollama/ollama:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: OLLAMA_HOST
+              value: 0.0.0.0
+          ports:
+            - containerPort: 11434
+              name: http
+          volumeMounts:
+            - name: ollama-data
+              mountPath: /root/.ollama
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+      volumes:
+        - name: ollama-data
+          persistentVolumeClaim:
+            claimName: ollama-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ollama
+  namespace: openclaw
+  labels:
+    app: ollama
+spec:
+  type: ClusterIP
+  selector:
+    app: ollama
+  ports:
+    - name: http
+      port: 11434
+      targetPort: 11434
+      protocol: TCP
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ollama-pull-model
+  namespace: openclaw
+spec:
+  ttlSecondsAfterFinished: 3600
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: pull-model
+          image: ollama/ollama:latest
+          command:
+            - /bin/sh
+            - -c
+            - |
+              ollama serve > /tmp/ollama.log 2>&1 &
+              until curl -fsS http://127.0.0.1:11434/api/tags >/dev/null 2>&1; do sleep 2; done
+              ollama pull llama3.2:3b
+          volumeMounts:
+            - name: ollama-data
+              mountPath: /root/.ollama
+      volumes:
+        - name: ollama-data
+          persistentVolumeClaim:
+            claimName: ollama-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: openclaw
+  namespace: openclaw
+  labels:
+    app: openclaw
+spec:
+  type: ClusterIP
+  selector:
+    app: openclaw
+  ports:
+    - name: http
+      port: 18789
+      targetPort: 18789
+      protocol: TCP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: openclaw
+  namespace: openclaw
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - ai.kamos.freeddns.org
+      secretName: openclaw-tls
+  rules:
+    - host: ai.kamos.freeddns.org
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: openclaw
+                port:
+                  number: 18789
