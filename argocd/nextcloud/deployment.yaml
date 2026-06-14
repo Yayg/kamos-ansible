@@ -44,6 +44,16 @@ spec:
                   key: admin-password
             - name: NEXTCLOUD_TRUSTED_DOMAINS
               value: nextcloud.kamos.freeddns.org
+            - name: APACHE_DISABLE_REWRITE_IP
+              value: "1"
+            - name: TRUSTED_PROXIES
+              value: "10.42.0.0/16 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16"
+            - name: OVERWRITEHOST
+              value: nextcloud.kamos.freeddns.org
+            - name: OVERWRITEPROTOCOL
+              value: https
+            - name: OVERWRITECLIURL
+              value: https://nextcloud.kamos.freeddns.org
           ports:
             - containerPort: 80
               name: http
@@ -79,6 +89,8 @@ metadata:
   namespace: nextcloud
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
 spec:
   ingressClassName: traefik
   tls:
