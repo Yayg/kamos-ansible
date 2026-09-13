@@ -1,0 +1,155 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gatus-config
+  namespace: status
+data:
+  config.yaml: |
+    ui:
+      title: Kamos Status
+      header: Kamos
+
+    endpoints:
+      - name: Dr Gozlan
+        group: sites
+        url: "https://docteur-ericgozlan.fr"
+        interval: 1m
+        conditions:
+          - "[STATUS] < 400"
+          - "[RESPONSE_TIME] < 3000"
+
+      - name: Hello Kubernetes
+        group: sites
+        url: "https://hello.kamos.freeddns.org"
+        interval: 1m
+        conditions:
+          - "[STATUS] < 400"
+          - "[RESPONSE_TIME] < 3000"
+
+      - name: Hello Kubernetes 2
+        group: sites
+        url: "https://hello2.kamos.freeddns.org"
+        interval: 1m
+        conditions:
+          - "[STATUS] < 400"
+          - "[RESPONSE_TIME] < 3000"
+
+      - name: OpenClaw
+        group: sites
+        url: "https://ai.kamos.freeddns.org"
+        interval: 1m
+        conditions:
+          - "[STATUS] < 400"
+          - "[RESPONSE_TIME] < 3000"
+
+      - name: Nextcloud
+        group: sites
+        url: "https://nextcloud.kamos.freeddns.org"
+        interval: 1m
+        conditions:
+          - "[STATUS] < 400"
+          - "[RESPONSE_TIME] < 3000"
+
+      - name: Home Assistant
+        group: sites
+        url: "https://home.kamos.freeddns.org"
+        interval: 1m
+        conditions:
+          - "[STATUS] < 400"
+          - "[RESPONSE_TIME] < 3000"
+
+      - name: ArgoCD
+        group: infra
+        url: "https://argo.kamos.freeddns.org"
+        interval: 1m
+        conditions:
+          - "[STATUS] < 400"
+          - "[RESPONSE_TIME] < 3000"
+
+      - name: Vault
+        group: infra
+        url: "https://vault.kamos.freeddns.org"
+        interval: 1m
+        conditions:
+          - "[STATUS] < 400"
+          - "[RESPONSE_TIME] < 3000"
+
+      - name: kagent
+        group: infra
+        url: "https://agent.kamos.freeddns.org"
+        interval: 1m
+        conditions:
+          - "[STATUS] < 400"
+          - "[RESPONSE_TIME] < 3000"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: status
+  namespace: status
+  labels:
+    app: status
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: status
+  template:
+    metadata:
+      labels:
+        app: status
+    spec:
+      containers:
+      - name: gatus
+        image: ghcr.io/twin/gatus:stable
+        ports:
+        - containerPort: 8080
+        volumeMounts:
+        - name: config
+          mountPath: /config
+      volumes:
+      - name: config
+        configMap:
+          name: gatus-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: status
+  namespace: status
+  labels:
+    app: status
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 8080
+    protocol: TCP
+  selector:
+    app: status
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: status
+  namespace: status
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    traefik.ingress.kubernetes.io/redirect-entry-point: https
+spec:
+  ingressClassName: traefik
+  tls:
+    - secretName: status-tls
+      hosts:
+        - status.kamos.freeddns.org
+  rules:
+  - host: status.kamos.freeddns.org
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: status
+            port:
+              number: 80
