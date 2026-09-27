@@ -14,6 +14,8 @@ spec:
     metadata:
       labels:
         app: raf-sh
+      annotations:
+        kubectl.kubernetes.io/restartedAt: "2026-09-27T18:30:00Z"
     spec:
       containers:
       - name: raf-sh
