@@ -66,6 +66,14 @@ data:
           - "[STATUS] < 400"
           - "[RESPONSE_TIME] < 3000"
 
+      - name: Sail-Fem
+        group: sites
+        url: "https://sail-fem.kamos.freeddns.org"
+        interval: 1m
+        conditions:
+          - "[STATUS] < 400"
+          - "[RESPONSE_TIME] < 3000"
+
       - name: ArgoCD
         group: infra
         url: "https://argo.kamos.freeddns.org"
