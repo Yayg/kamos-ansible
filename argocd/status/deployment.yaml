@@ -58,6 +58,14 @@ data:
           - "[STATUS] < 400"
           - "[RESPONSE_TIME] < 3000"
 
+      - name: raf.sh
+        group: sites
+        url: "https://raf.kamos.freeddns.org"
+        interval: 1m
+        conditions:
+          - "[STATUS] < 400"
+          - "[RESPONSE_TIME] < 3000"
+
       - name: ArgoCD
         group: infra
         url: "https://argo.kamos.freeddns.org"
