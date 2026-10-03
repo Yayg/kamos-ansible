@@ -1,0 +1,44 @@
+name: Sync raf-sh image
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Get digest of ghcr.io/yayg/raf.sh:latest
+        id: digest
+        run: |
+          TOKEN=$(curl -s "https://ghcr.io/token?service=ghcr.io&scope=repository:yayg/raf.sh:pull" | python3 -c "import json,sys;print(json.load(sys.stdin)['token'])")
+          DIGEST=$(curl -sI \
+            -H "Authorization: Bearer ${TOKEN}" \
+            -H "Accept: application/vnd.oci.image.index.v1+json" \
+            "https://ghcr.io/v2/yayg/raf.sh/manifests/latest" \
+            | grep -i '^docker-content-digest:' | awk '{print $2}' | tr -d '\r')
+          if [ -z "$DIGEST" ]; then
+            echo "Could not resolve digest for ghcr.io/yayg/raf.sh:latest" >&2
+            exit 1
+          fi
+          echo "digest=${DIGEST}" >> "$GITHUB_OUTPUT"
+
+      - name: Pin deployment to that digest if it changed
+        run: |
+          NEW_IMAGE="ghcr.io/yayg/raf.sh@${{ steps.digest.outputs.digest }}"
+          sed -i -E "s#image: ghcr\.io/yayg/raf\.sh(@sha256:[a-f0-9]+|:[A-Za-z0-9._-]+)#image: ${NEW_IMAGE}#" argocd/raf-sh/deployment.yaml
+          if git diff --quiet; then
+            echo "Already up to date with ${NEW_IMAGE}"
+            exit 0
+          fi
+          git config user.name "kamos-ci"
+          git config user.email "4986194+Yayg@users.noreply.github.com"
+          git commit -am "raf-sh: sync to latest image (${{ steps.digest.outputs.digest }})"
+          git push
