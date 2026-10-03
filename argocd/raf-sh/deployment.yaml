@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: raf-sh
-        image: ghcr.io/yayg/raf.sh:sha-abceacd
+        image: ghcr.io/yayg/raf.sh:sha-9d5fd1a
         ports:
         - containerPort: 80
 ---
