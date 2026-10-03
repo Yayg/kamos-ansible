@@ -18,3 +18,4 @@ microk8s_addons:
 external_secrets_vault_token_namespaces:
   - default
   - openclaw
+  - sail-fem

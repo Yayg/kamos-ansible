@@ -1,0 +1,118 @@
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: sail-fem-secrets
+  namespace: sail-fem
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: vault-secret-store
+    kind: ClusterSecretStore
+  target:
+    name: sail-fem-secrets
+    creationPolicy: Owner
+  data:
+    - secretKey: postgres-user
+      remoteRef:
+        key: sail-fem
+        property: postgres-user
+    - secretKey: postgres-db
+      remoteRef:
+        key: sail-fem
+        property: postgres-db
+    - secretKey: postgres-password
+      remoteRef:
+        key: sail-fem
+        property: postgres-password
+    - secretKey: auth-secret
+      remoteRef:
+        key: sail-fem
+        property: auth-secret
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: sail-fem-postgres-data
+  namespace: sail-fem
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sail-fem-postgres
+  namespace: sail-fem
+  labels:
+    app: sail-fem-postgres
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: sail-fem-postgres
+  template:
+    metadata:
+      labels:
+        app: sail-fem-postgres
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:16-alpine
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: sail-fem-secrets
+              key: postgres-user
+        - name: POSTGRES_DB
+          valueFrom:
+            secretKeyRef:
+              name: sail-fem-secrets
+              key: postgres-db
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: sail-fem-secrets
+              key: postgres-password
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
+        volumeMounts:
+        - name: data
+          mountPath: /var/lib/postgresql/data
+        readinessProbe:
+          exec:
+            command: ["pg_isready", "-U", "$(POSTGRES_USER)"]
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        livenessProbe:
+          exec:
+            command: ["pg_isready", "-U", "$(POSTGRES_USER)"]
+          initialDelaySeconds: 15
+          periodSeconds: 10
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: sail-fem-postgres-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sail-fem-postgres
+  namespace: sail-fem
+  labels:
+    app: sail-fem-postgres
+spec:
+  type: ClusterIP
+  ports:
+  - port: 5432
+    targetPort: 5432
+    protocol: TCP
+  selector:
+    app: sail-fem-postgres
