@@ -88,12 +88,17 @@ spec:
           mountPath: /var/lib/postgresql/data
         readinessProbe:
           exec:
-            command: ["pg_isready", "-U", "$(POSTGRES_USER)"]
+            # $(VAR) substitution only works in a container's own command/args,
+            # not inside a probe's exec.command — it does NOT expand here, so
+            # pg_isready would run with a literal "$(POSTGRES_USER)" string,
+            # fall back to the exec user (root), and never succeed. Wrap in a
+            # shell so real POSTGRES_USER env-var expansion happens at runtime.
+            command: ["sh", "-c", "pg_isready -U \"$POSTGRES_USER\""]
           initialDelaySeconds: 5
           periodSeconds: 5
         livenessProbe:
           exec:
-            command: ["pg_isready", "-U", "$(POSTGRES_USER)"]
+            command: ["sh", "-c", "pg_isready -U \"$POSTGRES_USER\""]
           initialDelaySeconds: 15
           periodSeconds: 10
       volumes:

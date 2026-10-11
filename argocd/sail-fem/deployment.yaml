@@ -45,6 +45,19 @@ spec:
             secretKeyRef:
               name: sail-fem-secrets
               key: auth-secret
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 15
+          periodSeconds: 5
+          failureThreshold: 12
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 15
 ---
 apiVersion: v1
 kind: Service
