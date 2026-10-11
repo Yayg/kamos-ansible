@@ -17,9 +17,34 @@ spec:
     spec:
       containers:
       - name: sail-fem
-        image: ghcr.io/yayg/sailfem.website:sha-6c113ba
+        image: ghcr.io/yayg/sailfem.website:sha-4c65765
         ports:
         - containerPort: 3000
+        env:
+        - name: POSTGRES_HOST
+          value: sail-fem-postgres
+        - name: POSTGRES_PORT
+          value: "5432"
+        - name: POSTGRES_USER
+          valueFrom:
+            secretKeyRef:
+              name: sail-fem-secrets
+              key: postgres-user
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: sail-fem-secrets
+              key: postgres-password
+        - name: POSTGRES_DB
+          valueFrom:
+            secretKeyRef:
+              name: sail-fem-secrets
+              key: postgres-db
+        - name: AUTH_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: sail-fem-secrets
+              key: auth-secret
 ---
 apiVersion: v1
 kind: Service
