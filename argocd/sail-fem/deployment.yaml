@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: sail-fem
-        image: ghcr.io/yayg/sailfem.website:sha-4c65765
+        image: ghcr.io/yayg/sailfem.website@sha256:b3429dad25e61ebd9d4f68417a897976c893e8c8c569997c79697956cae56330
         ports:
         - containerPort: 3000
         env:
