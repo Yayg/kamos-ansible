@@ -9,6 +9,10 @@ data:
       title: Kamos Status
       header: Kamos
 
+    storage:
+      type: sqlite
+      path: /data/data.db
+
     endpoints:
       - name: Dr Gozlan
         group: sites
@@ -98,6 +102,18 @@ data:
           - "[STATUS] < 400"
           - "[RESPONSE_TIME] < 3000"
 ---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: gatus-data
+  namespace: status
+spec:
+  accessModes: ["ReadWriteOnce"]
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 1Gi
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -123,10 +139,15 @@ spec:
         volumeMounts:
         - name: config
           mountPath: /config
+        - name: data
+          mountPath: /data
       volumes:
       - name: config
         configMap:
           name: gatus-config
+      - name: data
+        persistentVolumeClaim:
+          claimName: gatus-data
 ---
 apiVersion: v1
 kind: Service
