@@ -42,7 +42,7 @@ metadata:
   labels:
     app: openclaw
 spec:
-  replicas: 1
+  replicas: 0
   selector:
     matchLabels:
       app: openclaw
@@ -55,8 +55,6 @@ spec:
         - name: openclaw
           image: ghcr.io/openclaw/openclaw:latest
           imagePullPolicy: IfNotPresent
-          args:
-            - gateway
           env:
             - name: OPENCLAW_CONFIG_PATH
               value: /config/openclaw.json
@@ -124,7 +122,7 @@ metadata:
   labels:
     app: openclaw-local
 spec:
-  replicas: 1
+  replicas: 0
   selector:
     matchLabels:
       app: openclaw-local
@@ -137,8 +135,6 @@ spec:
         - name: openclaw-local
           image: ghcr.io/openclaw/openclaw:latest
           imagePullPolicy: IfNotPresent
-          args:
-            - gateway
           env:
             - name: OPENCLAW_CONFIG_PATH
               value: /config/openclaw-local.json
